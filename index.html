@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistema de Taquería</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#06C167">
 <script>
@@ -18,7 +17,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-  
+
 <style>
 body{
   font-family:Arial;
@@ -35,7 +34,7 @@ header{
   font-weight:bold;
   display:flex;
   align-items:center;
-  justify-content:space-between; /* Título a la izquierda, menú a la derecha */
+  justify-content:space-between;
 }
 
 /* BOTÓN DE MENÚ */
@@ -165,6 +164,30 @@ canvas{
   margin-bottom:25px;
   box-shadow:0 6px 16px rgba(0,0,0,0.12);
 }
+
+.kpi-container{
+  display:flex;
+  justify-content:space-around;
+  margin-bottom:20px;
+}
+
+.kpi{
+  background:white;
+  border-radius:12px;
+  padding:16px;
+  flex:1;
+  margin:0 10px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  text-align:center;
+  font-weight:bold;
+}
+
+.kpi span{
+  display:block;
+  font-size:24px;
+  color:#06C167;
+  margin-top:8px;
+}
 </style>
 </head>
 
@@ -225,6 +248,13 @@ canvas{
 
 <div id="dashboard" class="hidden">
 <h2>📊 Dashboard</h2>
+
+<div class="kpi-container">
+  <div class="kpi">Total Ventas <span id="kpiVentas">$0</span></div>
+  <div class="kpi">Total Órdenes <span id="kpiOrdenes">0</span></div>
+  <div class="kpi">Promedio Cliente <span id="kpiPromedio">$0</span></div>
+</div>
+
 <canvas id="graficaVentasDia"></canvas>
 <canvas id="graficaOrdenes"></canvas>
 <canvas id="graficaTipos"></canvas>
@@ -247,7 +277,7 @@ const db=getFirestore(app);
 const pedidosRef=collection(db,"pedidos");
 
 let pedidos=[];
-let grafica2,grafica3,grafica4;
+let graficaVentas,graficaOrdenes,graficaTipos;
 
 /* MENU */
 window.toggleMenu=function(){
@@ -419,11 +449,11 @@ function mostrarHistorial(){
   });
 }
 
-/* GRAFICAS */
-function actualizarGraficas(){
+/* DASHBOARD Y GRAFICAS */
+function actualizarDashboard(){
   let ventas=pedidos.filter(p=>p.estado==="pagado");
-  let porFecha={};
-  let porTipo={};
+  let porFecha={},porTipo={};
+  let totalVentas=0,totalOrdenes=0;
   ventas.forEach(p=>{
     let fechaObj=p.fecha.toDate();
     let fecha=fechaObj.toLocaleDateString();
@@ -432,25 +462,38 @@ function actualizarGraficas(){
     porFecha[fecha].ordenes++;
     if(!porTipo[p.tipo]) porTipo[p.tipo]=0;
     porTipo[p.tipo]++;
+    totalVentas+=p.precio;
+    totalOrdenes++;
   });
+
+  // KPIs
+  document.getElementById("kpiVentas").innerText="$"+totalVentas;
+  document.getElementById("kpiOrdenes").innerText=totalOrdenes;
+  document.getElementById("kpiPromedio").innerText="$"+(totalOrdenes?Math.round(totalVentas/totalOrdenes):0);
+
+  // Gráficas
   let ordenado=Object.values(porFecha).sort((a,b)=>a.date-b.date);
   let labels=ordenado.map(f=>f.date.toLocaleDateString());
   let ventasData=ordenado.map(f=>f.total);
   let ordenesData=ordenado.map(f=>f.ordenes);
-  if(grafica2)grafica2.destroy();
-  if(grafica3)grafica3.destroy();
-  if(grafica4)grafica4.destroy();
-  grafica2=new Chart(document.getElementById("graficaVentasDia"),{
+
+  if(graficaVentas) graficaVentas.destroy();
+  if(graficaOrdenes) graficaOrdenes.destroy();
+  if(graficaTipos) graficaTipos.destroy();
+
+  graficaVentas=new Chart(document.getElementById("graficaVentasDia"),{
     type:"bar",
-    data:{labels,datasets:[{label:"Ventas $",data:ventasData}]}
+    data:{labels,datasets:[{label:"Ventas $",data:ventasData,backgroundColor:"#06C167"}]}
   });
-  grafica3=new Chart(document.getElementById("graficaOrdenes"),{
+
+  graficaOrdenes=new Chart(document.getElementById("graficaOrdenes"),{
     type:"line",
-    data:{labels,datasets:[{label:"Órdenes",data:ordenesData}]}
+    data:{labels,datasets:[{label:"Órdenes",data:ordenesData,borderColor:"#f7b500",fill:false,tension:0.3}]}
   });
-  grafica4=new Chart(document.getElementById("graficaTipos"),{
+
+  graficaTipos=new Chart(document.getElementById("graficaTipos"),{
     type:"pie",
-    data:{labels:Object.keys(porTipo),datasets:[{data:Object.values(porTipo)}]}
+    data:{labels:Object.keys(porTipo),datasets:[{data:Object.values(porTipo),backgroundColor:["#06C167","#ff5a5f","#f7b500","#00aaff","#aa00ff","#ff9900"]}]}
   });
 }
 
@@ -469,7 +512,7 @@ onSnapshot(pedidosRef,(snapshot)=>{
   mostrarPedidos();
   mostrarProduccion();
   mostrarHistorial();
-  actualizarGraficas();
+  actualizarDashboard();
 });
 </script>
 
