@@ -1,32 +1,41 @@
-const CACHE_NAME = "taqueria-cache-v2"; // sube la versión cuando cambies
+const CACHE_NAME = "taqueria-cache-v3"; // cambia la versión cada vez que actualices
 const urlsToCache = [
-  "./index.html",
-  "./manifest.json",
-  "./sw.js",
-  // aquí puedes añadir tus CSS, JS y otros recursos
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/icon-192.png",
+  "/icon-512.png"
 ];
 
-// Instalar
-self.addEventListener("install", event => {
+// Instalación del SW
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(urlsToCache);
+    })
   );
-  self.skipWaiting(); // fuerza al SW a activarse inmediatamente
+  self.skipWaiting(); // activa inmediatamente
 });
 
-// Activar
-self.addEventListener("activate", event => {
+// Activación del SW
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(keys => 
-      Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))
+    caches.keys().then((cacheNames) =>
+      Promise.all(
+        cacheNames.map((name) => {
+          if (name !== CACHE_NAME) return caches.delete(name); // elimina versiones viejas
+        })
+      )
     )
   );
-  self.clients.claim(); // toma control de la página
+  self.clients.claim(); // toma control inmediato
 });
 
-// Fetch
-self.addEventListener("fetch", event => {
+// Interceptar fetch para servir desde caché
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
   );
 });
