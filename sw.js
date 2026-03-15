@@ -1,4 +1,4 @@
-const CACHE_NAME = "taqueria-cache-v3"; // cambia la versión cada vez que actualices
+const CACHE_NAME = "taqueria-cache-v4"; // cambia la versión cada vez que actualices
 const urlsToCache = [
   "/",
   "/index.html",
