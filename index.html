@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Taquería</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#06C167">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+    .then(reg => console.log('Service Worker registrado', reg))
+    .catch(err => console.log('Error SW', err));
+  });
+}
+</script>
+  
+<style>
+body{
+  font-family:Arial;
+  background:#f5f5f5;
+  margin:0;
+}
+
+/* HEADER */
+header{
+  background:#06C167;
+  color:white;
+  padding:18px;
+  font-size:22px;
+  font-weight:bold;
+  display:flex;
+  align-items:center;
+  justify-content:space-between; /* Título a la izquierda, menú a la derecha */
+}
+
+/* BOTÓN DE MENÚ */
+.menuBtn{
+  font-size:22px;
+  cursor:pointer;
+  background:none;
+  border:none;
+  color:white;
+}
+
+/* SIDEBAR DERECHA */
+.sidebar{
+  position:fixed;
+  right:-240px;
+  top:0;
+  width:220px;
+  height:100%;
+  background:white;
+  box-shadow:-2px 0 10px rgba(0,0,0,0.2);
+  padding-top:50px;
+  transition:0.3s;
+  z-index:1000;
+}
+
+/* BOTÓN DE CIERRE FIJO */
+.sidebar .closeBtn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  font-size:22px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:#06C167;
+  font-weight:bold;
+}
+
+/* BOTONES DEL SIDEBAR */
+.sidebar button:not(.closeBtn){
+  display:block;
+  width:90%;
+  margin:10px auto;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:#06C167;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.sidebar.open{
+  right:0;
+}
+
+/* CONTENIDO */
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+
+input,select{
+  padding:10px;
+  margin:6px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  font-size:16px;
+}
+
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.agregar{
+  background:#06C167;
+  color:white;
+}
+
+.hidden{
+  display:none;
+}
+
+.card{
+  background:white;
+  border-radius:14px;
+  padding:16px;
+  margin:16px 0;
+  box-shadow:0 6px 16px rgba(0,0,0,0.12);
+}
+
+.cardTitulo{
+  font-size:18px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+li{
+  list-style:none;
+  margin:8px 0;
+  padding:12px;
+  border-radius:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:white;
+}
+
+.rojo{background:#ff5a5f;}
+.amarillo{background:#f7b500;color:black;}
+.verde{background:#06C167;}
+
+.btnBorrar{
+  background:#ff2b2b;
+  color:white;
+  font-weight:bold;
+}
+
+canvas{
+  background:white;
+  border-radius:14px;
+  padding:10px;
+  margin-bottom:25px;
+  box-shadow:0 6px 16px rgba(0,0,0,0.12);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  🌮 Sistema de Taquería
+  <button class="menuBtn" onclick="toggleMenu()">☰</button>
+</header>
+
+<div id="sidebar" class="sidebar">
+  <button class="closeBtn" onclick="toggleMenu()">✖</button>
+  <button onclick="mostrarMenu('nuevo')">Nuevo pedido</button>
+  <button onclick="mostrarMenu('pedidos')">Pedidos</button>
+  <button onclick="mostrarMenu('produccion')">Producción</button>
+  <button onclick="mostrarMenu('ventas')">Ventas</button>
+  <button onclick="mostrarMenu('dashboard')">Dashboard</button>
+</div>
+
+<div class="container">
+
+<div id="nuevo">
+<h2>Agregar pedido</h2>
+<input id="cliente" placeholder="Nombre del cliente">
+<input id="fechaPedido" type="date"><br>
+<select id="tipo">
+<option>Morita Mixta</option>
+<option>Morita Pollo</option>
+<option>Morita Papa</option>
+<option>Morita Queso</option>
+<option>Tomate Mixta</option>
+<option>Tomate Pollo</option>
+<option>Tomate Papa</option>
+<option>Tomate Queso</option>
+</select>
+<select id="precio">
+<option value="35">$35</option>
+<option value="50">$50</option>
+</select>
+<input id="cantidad" type="number" value="1" min="1" max="10" style="width:60px"><br>
+<button class="agregar" onclick="agregarPedido()">Agregar Pedido</button>
+</div>
+
+<div id="pedidos" class="hidden">
+<h2>Pedidos</h2>
+<div id="listaPedidos"></div>
+</div>
+
+<div id="produccion" class="hidden">
+<h2>Producción</h2>
+<div id="listaProduccion"></div>
+</div>
+
+<div id="ventas" class="hidden">
+<h2>Ventas</h2>
+<div id="historialVentas"></div>
+</div>
+
+<div id="dashboard" class="hidden">
+<h2>📊 Dashboard</h2>
+<canvas id="graficaVentasDia"></canvas>
+<canvas id="graficaOrdenes"></canvas>
+<canvas id="graficaTipos"></canvas>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore,collection,addDoc,onSnapshot,updateDoc,doc,Timestamp,deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyC1HkK67NNJuDsN5xQuQOVPtgj-H1u9ZdA",
+authDomain:"taqueria-pedidos.firebaseapp.com",
+projectId:"taqueria-pedidos"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const pedidosRef=collection(db,"pedidos");
+
+let pedidos=[];
+let grafica2,grafica3,grafica4;
+
+/* MENU */
+window.toggleMenu=function(){
+  document.getElementById("sidebar").classList.toggle("open");
+}
+
+window.mostrarMenu=function(seccion){
+  mostrar(seccion);
+  document.getElementById("sidebar").classList.remove("open");
+}
+
+/* NAVEGACION */
+window.mostrar=function(p){
+  ["nuevo","pedidos","produccion","ventas","dashboard"].forEach(id=>{
+    document.getElementById(id).classList.add("hidden");
+  });
+  document.getElementById(p).classList.remove("hidden");
+}
+
+/* AGREGAR PEDIDO */
+window.agregarPedido=async function(){
+  let cliente=document.getElementById("cliente").value;
+  let fecha=document.getElementById("fechaPedido").value;
+  let tipo=document.getElementById("tipo").value;
+  let precio=parseInt(document.getElementById("precio").value);
+  let cantidad=parseInt(document.getElementById("cantidad").value)||1;
+
+  if(cliente===""){
+    alert("Escribe nombre");
+    return;
+  }
+
+  let fechaObj=fecha?new Date(fecha+"T12:00:00"):new Date();
+
+  for(let i=0;i<cantidad;i++){
+    await addDoc(pedidosRef,{
+      cliente,
+      tipo,
+      precio,
+      fecha:Timestamp.fromDate(fechaObj),
+      estado:"pendiente"
+    });
+  }
+
+  document.getElementById("cliente").value="";
+  document.getElementById("cantidad").value=1;
+}
+
+/* PEDIDOS */
+function mostrarPedidos(){
+  let contenedor=document.getElementById("listaPedidos");
+  contenedor.innerHTML="";
+  let activos=pedidos.filter(p=>p.estado!=="pagado");
+  let porFecha={};
+  activos.forEach(p=>{
+    let fecha=p.fecha?.toDate().toLocaleDateString();
+    if(!porFecha[fecha]) porFecha[fecha]=[];
+    porFecha[fecha].push(p);
+  });
+  Object.keys(porFecha).forEach(fecha=>{
+    let card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`<div class="cardTitulo">📅 ${fecha}</div>`;
+    porFecha[fecha].forEach(p=>{
+      let li=document.createElement("li");
+      li.className=p.estado==="pendiente"?"rojo":"amarillo";
+      li.innerHTML=`
+      ${p.cliente} - ${p.tipo} ($${p.precio})
+      <div>
+        <button onclick="entregar('${p.id}')">✔</button>
+        <button onclick="pagar('${p.id}')">$</button>
+        <button class="btnBorrar" onclick="borrarPedido('${p.id}')">X</button>
+      </div>
+      `;
+      card.appendChild(li);
+    });
+    contenedor.appendChild(card);
+  });
+}
+
+/* PRODUCCION */
+function mostrarProduccion(){
+  let cont=document.getElementById("listaProduccion");
+  cont.innerHTML="";
+  let pendientes=pedidos.filter(p=>p.estado==="pendiente");
+  let agrupados={};
+  pendientes.forEach(p=>{
+    let key=p.tipo+"-"+p.precio;
+    if(!agrupados[key]){
+      agrupados[key]={tipo:p.tipo,precio:p.precio,ordenes:0};
+    }
+    agrupados[key].ordenes++;
+  });
+  let totalTacos=0;
+  let totalTortillas=0;
+  for(let k in agrupados){
+    let item=agrupados[k];
+    let tacosPorOrden=item.precio==50?7:5;
+    let tacos=item.ordenes*tacosPorOrden;
+    let tortillas=tacos;
+    totalTacos+=tacos;
+    totalTortillas+=tortillas;
+    let li=document.createElement("li");
+    li.className="rojo";
+    li.innerText=item.ordenes+" "+item.tipo+" | "+tacos+" tacos | "+tortillas+" tortillas";
+    cont.appendChild(li);
+  }
+  let total=document.createElement("div");
+  total.style.marginTop="10px";
+  total.style.fontWeight="bold";
+  total.innerText="TOTAL: "+totalTacos+" tacos | "+totalTortillas+" tortillas";
+  cont.appendChild(total);
+}
+
+/* HISTORIAL */
+function mostrarHistorial(){
+  let cont=document.getElementById("historialVentas");
+  cont.innerHTML="";
+  let ventas=pedidos.filter(p=>p.estado==="pagado");
+  ventas.sort((a,b)=>b.fecha.seconds-a.fecha.seconds);
+  let agrupados={};
+  ventas.forEach(p=>{
+    let fecha=p.fecha?.toDate().toLocaleDateString();
+    if(!agrupados[fecha]) agrupados[fecha]=[];
+    agrupados[fecha].push(p);
+  });
+  Object.keys(agrupados).forEach(fecha=>{
+    let pedidosDia=agrupados[fecha];
+    let card=document.createElement("div");
+    card.className="card";
+    let tipos={};
+    let total=0;
+    pedidosDia.forEach(p=>{
+      let key=p.tipo+"-"+p.precio;
+      if(!tipos[key]){
+        tipos[key]={tipo:p.tipo,precio:p.precio,cantidad:0,id:p.id};
+      }
+      tipos[key].cantidad++;
+      total+=p.precio;
+    });
+    let detalle=document.createElement("div");
+    detalle.style.display="none";
+    for(let k in tipos){
+      let t=tipos[k];
+      let li=document.createElement("li");
+      li.className="verde";
+      li.innerHTML=`
+      ${t.cantidad} ${t.tipo} = $${t.cantidad*t.precio}
+      <button class="btnBorrar" onclick="borrarPedido('${t.id}')">X</button>
+      `;
+      detalle.appendChild(li);
+    }
+    let boton=document.createElement("button");
+    boton.innerText="Abrir";
+    boton.onclick=function(){
+      if(detalle.style.display==="none"){
+        detalle.style.display="block";
+        boton.innerText="Cerrar";
+      }else{
+        detalle.style.display="none";
+        boton.innerText="Abrir";
+      }
+    }
+    card.innerHTML=`<div class="cardTitulo">Venta ${fecha}</div>
+    <div style="font-weight:bold;margin-bottom:10px;">💰 Total del día: $${total}</div>`;
+    card.appendChild(boton);
+    card.appendChild(detalle);
+    cont.appendChild(card);
+  });
+}
+
+/* GRAFICAS */
+function actualizarGraficas(){
+  let ventas=pedidos.filter(p=>p.estado==="pagado");
+  let porFecha={};
+  let porTipo={};
+  ventas.forEach(p=>{
+    let fechaObj=p.fecha.toDate();
+    let fecha=fechaObj.toLocaleDateString();
+    if(!porFecha[fecha]) porFecha[fecha]={total:0,ordenes:0,date:fechaObj};
+    porFecha[fecha].total+=p.precio;
+    porFecha[fecha].ordenes++;
+    if(!porTipo[p.tipo]) porTipo[p.tipo]=0;
+    porTipo[p.tipo]++;
+  });
+  let ordenado=Object.values(porFecha).sort((a,b)=>a.date-b.date);
+  let labels=ordenado.map(f=>f.date.toLocaleDateString());
+  let ventasData=ordenado.map(f=>f.total);
+  let ordenesData=ordenado.map(f=>f.ordenes);
+  if(grafica2)grafica2.destroy();
+  if(grafica3)grafica3.destroy();
+  if(grafica4)grafica4.destroy();
+  grafica2=new Chart(document.getElementById("graficaVentasDia"),{
+    type:"bar",
+    data:{labels,datasets:[{label:"Ventas $",data:ventasData}]}
+  });
+  grafica3=new Chart(document.getElementById("graficaOrdenes"),{
+    type:"line",
+    data:{labels,datasets:[{label:"Órdenes",data:ordenesData}]}
+  });
+  grafica4=new Chart(document.getElementById("graficaTipos"),{
+    type:"pie",
+    data:{labels:Object.keys(porTipo),datasets:[{data:Object.values(porTipo)}]}
+  });
+}
+
+/* ACCIONES */
+window.entregar=id=>updateDoc(doc(db,"pedidos",id),{estado:"entregado"});
+window.pagar=id=>updateDoc(doc(db,"pedidos",id),{estado:"pagado"});
+window.borrarPedido=async id=>{
+  if(!confirm("¿Borrar pedido?"))return;
+  await deleteDoc(doc(db,"pedidos",id));
+}
+
+/* LISTENER */
+onSnapshot(pedidosRef,(snapshot)=>{
+  pedidos=[];
+  snapshot.forEach(d=>pedidos.push({id:d.id,...d.data()}));
+  mostrarPedidos();
+  mostrarProduccion();
+  mostrarHistorial();
+  actualizarGraficas();
+});
+</script>
+
+</body>
+</html>
