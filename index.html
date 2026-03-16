@@ -10,57 +10,38 @@
 <meta name="theme-color" content="#06C167">
 
 <script>
-
-let newWorker;
-
-if ('serviceWorker' in navigator) {
-
 window.addEventListener('load', () => {
 
-navigator.serviceWorker.register('sw.js')
-.then(reg => {
+  if ('serviceWorker' in navigator) {
 
-console.log('Service Worker registrado', reg);
+    navigator.serviceWorker.register('sw.js')
+    .then(reg => {
 
-/* detectar actualización */
+      console.log('Service Worker registrado', reg);
 
-reg.addEventListener('updatefound', () => {
+      reg.addEventListener('updatefound', () => {
 
-newWorker = reg.installing;
+        newWorker = reg.installing;
 
-newWorker.addEventListener('statechange', () => {
+        newWorker.addEventListener('statechange', () => {
 
-if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
 
-document.getElementById("updateBox").style.display="block";
+            let box = document.getElementById("updateBox");
+            if(box) box.style.display="block";
 
-}
+          }
+
+        });
+
+      });
+
+    })
+    .catch(err => console.log('Error SW', err));
+
+  }
 
 });
-
-});
-
-})
-.catch(err => console.log('Error SW', err));
-
-});
-
-}
-
-/* botón actualizar */
-
-function actualizarApp(){
-
-if(newWorker){
-
-newWorker.postMessage({action:'skipWaiting'});
-
-}
-
-window.location.reload();
-
-}
-
 </script>
 
 <style>
