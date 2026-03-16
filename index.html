@@ -9,238 +9,270 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#06C167">
 
-  <script>
+<<script>
+
+let newWorker;
+
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const registration = await navigator.serviceWorker.register('sw.js');
-      console.log('Service Worker registrado', registration);
 
-      // Revisar si hay una nueva versión disponible y actualizarla
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
+window.addEventListener('load', () => {
 
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed') {
-            if (navigator.serviceWorker.controller) {
-              // hay nueva versión
-              console.log("Nueva versión disponible. Recarga para actualizar.");
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-          }
-        });
-      });
+navigator.serviceWorker.register('sw.js')
+.then(reg => {
 
-    } catch (err) {
-      console.log('Error SW', err);
-    }
-  });
+console.log('Service Worker registrado', reg);
+
+/* detectar actualización */
+
+reg.addEventListener('updatefound', () => {
+
+newWorker = reg.installing;
+
+newWorker.addEventListener('statechange', () => {
+
+if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+
+document.getElementById("updateBox").style.display="block";
+
 }
 
-// Escuchar mensaje del SW para recargar la página
-navigator.serviceWorker.addEventListener('controllerchange', () => {
-  window.location.reload();
 });
-  </script>
+
+});
+
+})
+.catch(err => console.log('Error SW', err));
+
+});
+
+}
+
+/* botón actualizar */
+
+function actualizarApp(){
+
+if(newWorker){
+
+newWorker.postMessage({action:'skipWaiting'});
+
+}
+
+window.location.reload();
+
+}
+
+</script>
 
 <style>
+
 body{
-  font-family:Arial;
-  background:#f5f5f5;
-  margin:0;
+font-family:Arial;
+background:#f5f5f5;
+margin:0;
 }
 
-/* HEADER */
 header{
-  background:#06C167;
-  color:white;
-  padding:18px;
-  font-size:22px;
-  font-weight:bold;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
+background:#06C167;
+color:white;
+padding:18px;
+font-size:22px;
+font-weight:bold;
+display:flex;
+align-items:center;
+justify-content:space-between;
 }
 
-/* BOTÓN DE MENÚ */
 .menuBtn{
-  font-size:22px;
-  cursor:pointer;
-  background:none;
-  border:none;
-  color:white;
+font-size:22px;
+cursor:pointer;
+background:none;
+border:none;
+color:white;
 }
 
-/* SIDEBAR DERECHA */
 .sidebar{
-  position:fixed;
-  right:-240px;
-  top:0;
-  width:220px;
-  height:100%;
-  background:white;
-  box-shadow:-2px 0 10px rgba(0,0,0,0.2);
-  padding-top:50px;
-  transition:0.3s;
-  z-index:1000;
+position:fixed;
+right:-240px;
+top:0;
+width:220px;
+height:100%;
+background:white;
+box-shadow:-2px 0 10px rgba(0,0,0,0.2);
+padding-top:50px;
+transition:0.3s;
+z-index:1000;
 }
 
-/* BOTÓN DE CIERRE FIJO */
 .sidebar .closeBtn{
-  position:absolute;
-  top:10px;
-  right:10px;
-  font-size:22px;
-  background:none;
-  border:none;
-  cursor:pointer;
-  color:#06C167;
-  font-weight:bold;
+position:absolute;
+top:10px;
+right:10px;
+font-size:22px;
+background:none;
+border:none;
+cursor:pointer;
+color:#06C167;
+font-weight:bold;
 }
 
-/* BOTONES DEL SIDEBAR */
 .sidebar button:not(.closeBtn){
-  display:block;
-  width:90%;
-  margin:10px auto;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:#06C167;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
+display:block;
+width:90%;
+margin:10px auto;
+padding:12px;
+border:none;
+border-radius:10px;
+background:#06C167;
+color:white;
+font-weight:bold;
+cursor:pointer;
 }
 
 .sidebar.open{
-  right:0;
+right:0;
 }
 
-/* CONTENIDO */
 .container{
-  max-width:900px;
-  margin:auto;
-  padding:20px;
+max-width:900px;
+margin:auto;
+padding:20px;
 }
 
 input,select{
-  padding:10px;
-  margin:6px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-size:16px;
+padding:10px;
+margin:6px;
+border-radius:8px;
+border:1px solid #ccc;
+font-size:16px;
 }
 
 button{
-  padding:8px 12px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
+padding:8px 12px;
+border:none;
+border-radius:8px;
+cursor:pointer;
 }
 
 .agregar{
-  background:#06C167;
-  color:white;
+background:#06C167;
+color:white;
 }
 
 .hidden{
-  display:none;
+display:none;
 }
 
 .card{
-  background:white;
-  border-radius:14px;
-  padding:16px;
-  margin:16px 0;
-  box-shadow:0 6px 16px rgba(0,0,0,0.12);
+background:white;
+border-radius:14px;
+padding:16px;
+margin:16px 0;
+box-shadow:0 6px 16px rgba(0,0,0,0.12);
 }
 
 .cardTitulo{
-  font-size:18px;
-  font-weight:bold;
-  margin-bottom:10px;
+font-size:18px;
+font-weight:bold;
+margin-bottom:10px;
 }
 
 li{
-  list-style:none;
-  margin:8px 0;
-  padding:12px;
-  border-radius:10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  color:white;
+list-style:none;
+margin:8px 0;
+padding:12px;
+border-radius:10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+color:white;
 }
 
 .rojo{background:#ff5a5f;}
 .amarillo{background:#f7b500;color:black;}
+.azul{background:#00aaff;}
 .verde{background:#06C167;}
 
 .btnBorrar{
-  background:#ff2b2b;
-  color:white;
-  font-weight:bold;
+background:#ff2b2b;
+color:white;
+font-weight:bold;
 }
 
 canvas{
-  background:white;
-  border-radius:14px;
-  padding:10px;
-  margin-bottom:25px;
-  box-shadow:0 6px 16px rgba(0,0,0,0.12);
+background:white;
+border-radius:14px;
+padding:10px;
+margin-bottom:25px;
+box-shadow:0 6px 16px rgba(0,0,0,0.12);
 }
 
 .kpi-container{
-  display:flex;
-  justify-content:space-around;
-  margin-bottom:20px;
+display:flex;
+justify-content:space-around;
+margin-bottom:20px;
 }
 
 .kpi{
-  background:white;
-  border-radius:12px;
-  padding:16px;
-  flex:1;
-  margin:0 10px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.1);
-  text-align:center;
-  font-weight:bold;
+background:white;
+border-radius:12px;
+padding:16px;
+flex:1;
+margin:0 10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.1);
+text-align:center;
+font-weight:bold;
 }
 
 .kpi span{
-  display:block;
-  font-size:24px;
-  color:#06C167;
-  margin-top:8px;
+display:block;
+font-size:24px;
+color:#06C167;
+margin-top:8px;
 }
+
+.tabsPedidos{
+display:flex;
+gap:10px;
+margin-bottom:15px;
+}
+
+.tabsPedidos button{
+background:#eaeaea;
+font-weight:bold;
+}
+
+.tabsPedidos button.activo{
+background:#06C167;
+color:white;
+}
+
 </style>
 </head>
 
 <body>
 
 <header>
-  🌮 Sistema de Taquería
-  <button class="menuBtn" onclick="toggleMenu()">☰</button>
+🌮 Sistema de Taquería
+<button class="menuBtn" onclick="toggleMenu()">☰</button>
 </header>
 
 <div id="sidebar" class="sidebar">
-  <button class="closeBtn" onclick="toggleMenu()">✖</button>
-  <button onclick="mostrarMenu('nuevo')">Nuevo pedido</button>
-  <button onclick="mostrarMenu('pedidos')">Pedidos</button>
-  <button onclick="mostrarMenu('produccion')">Producción</button>
-  <button onclick="mostrarMenu('ventas')">Ventas</button>
-  <button onclick="mostrarMenu('dashboard')">Dashboard</button>
+<button class="closeBtn" onclick="toggleMenu()">✖</button>
+<button onclick="mostrarMenu('nuevo')">Nuevo pedido</button>
+<button onclick="mostrarMenu('pedidos')">Pedidos</button>
+<button onclick="mostrarMenu('produccion')">Producción</button>
+<button onclick="mostrarMenu('ventas')">Ventas</button>
+<button onclick="mostrarMenu('dashboard')">Dashboard</button>
 </div>
 
 <div class="container">
 
 <div id="nuevo">
 <h2>Agregar pedido</h2>
+
 <input id="cliente" placeholder="Nombre del cliente">
 <input id="fechaPedido" type="date"><br>
+
 <select id="tipo">
 <option>Morita Mixta</option>
 <option>Morita Pollo</option>
@@ -251,17 +283,36 @@ canvas{
 <option>Tomate Papa</option>
 <option>Tomate Queso</option>
 </select>
+
 <select id="precio">
 <option value="35">$35</option>
 <option value="50">$50</option>
 </select>
+
 <input id="cantidad" type="number" value="1" min="1" max="10" style="width:60px"><br>
+
 <button class="agregar" onclick="agregarPedido()">Agregar Pedido</button>
 </div>
 
 <div id="pedidos" class="hidden">
+
 <h2>Pedidos</h2>
+
+<button class="agregar" onclick="finalizarPedidos()" style="margin-bottom:10px;">
+Finalizar pedidos
+</button>
+
+<div class="tabsPedidos">
+
+<button onclick="cambiarVista('pendiente')" id="tabPendiente">Pendientes</button>
+<button onclick="cambiarVista('listo')" id="tabListo">Listos</button>
+<button onclick="cambiarVista('entregado')" id="tabEntregado">Entregados</button>
+<button onclick="cambiarVista('pagado')" id="tabPagado">Pagados</button>
+
+</div>
+
 <div id="listaPedidos"></div>
+
 </div>
 
 <div id="produccion" class="hidden">
@@ -275,22 +326,25 @@ canvas{
 </div>
 
 <div id="dashboard" class="hidden">
+
 <h2>📊 Dashboard</h2>
 
 <div class="kpi-container">
-  <div class="kpi">Total Ventas <span id="kpiVentas">$0</span></div>
-  <div class="kpi">Total Órdenes <span id="kpiOrdenes">0</span></div>
-  <div class="kpi">Promedio Cliente <span id="kpiPromedio">$0</span></div>
+<div class="kpi">Total Ventas <span id="kpiVentas">$0</span></div>
+<div class="kpi">Total Órdenes <span id="kpiOrdenes">0</span></div>
+<div class="kpi">Promedio Cliente <span id="kpiPromedio">$0</span></div>
 </div>
 
 <canvas id="graficaVentasDia"></canvas>
 <canvas id="graficaOrdenes"></canvas>
 <canvas id="graficaTipos"></canvas>
+
 </div>
 
 </div>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore,collection,addDoc,onSnapshot,updateDoc,doc,Timestamp,deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
@@ -305,244 +359,497 @@ const db=getFirestore(app);
 const pedidosRef=collection(db,"pedidos");
 
 let pedidos=[];
+let vistaActual="pendiente";
+
 let graficaVentas,graficaOrdenes,graficaTipos;
 
-/* MENU */
 window.toggleMenu=function(){
-  document.getElementById("sidebar").classList.toggle("open");
+document.getElementById("sidebar").classList.toggle("open");
 }
 
 window.mostrarMenu=function(seccion){
-  mostrar(seccion);
-  document.getElementById("sidebar").classList.remove("open");
+mostrar(seccion);
+document.getElementById("sidebar").classList.remove("open");
 }
 
-/* NAVEGACION */
 window.mostrar=function(p){
-  ["nuevo","pedidos","produccion","ventas","dashboard"].forEach(id=>{
-    document.getElementById(id).classList.add("hidden");
-  });
-  document.getElementById(p).classList.remove("hidden");
+
+["nuevo","pedidos","produccion","ventas","dashboard"].forEach(id=>{
+document.getElementById(id).classList.add("hidden");
+});
+
+document.getElementById(p).classList.remove("hidden");
+
+if(p==="produccion"){
+mostrarProduccion();
 }
 
-/* AGREGAR PEDIDO */
+if(p==="ventas"){
+mostrarHistorial();
+}
+
+}
+
+window.cambiarVista=function(vista){
+
+vistaActual=vista;
+
+document.querySelectorAll(".tabsPedidos button").forEach(b=>b.classList.remove("activo"));
+
+if(vista==="pendiente")document.getElementById("tabPendiente").classList.add("activo");
+if(vista==="listo")document.getElementById("tabListo").classList.add("activo");
+if(vista==="entregado")document.getElementById("tabEntregado").classList.add("activo");
+if(vista==="pagado")document.getElementById("tabPagado").classList.add("activo");
+
+mostrarPedidos();
+
+}
+
 window.agregarPedido=async function(){
-  let cliente=document.getElementById("cliente").value;
-  let fecha=document.getElementById("fechaPedido").value;
-  let tipo=document.getElementById("tipo").value;
-  let precio=parseInt(document.getElementById("precio").value);
-  let cantidad=parseInt(document.getElementById("cantidad").value)||1;
 
-  if(cliente===""){
-    alert("Escribe nombre");
-    return;
-  }
+let cliente=document.getElementById("cliente").value;
+let fecha=document.getElementById("fechaPedido").value;
+let tipo=document.getElementById("tipo").value;
+let precio=parseInt(document.getElementById("precio").value);
+let cantidad=parseInt(document.getElementById("cantidad").value)||1;
 
-  let fechaObj=fecha?new Date(fecha+"T12:00:00"):new Date();
-
-  for(let i=0;i<cantidad;i++){
-    await addDoc(pedidosRef,{
-      cliente,
-      tipo,
-      precio,
-      fecha:Timestamp.fromDate(fechaObj),
-      estado:"pendiente"
-    });
-  }
-
-  document.getElementById("cliente").value="";
-  document.getElementById("cantidad").value=1;
+if(cliente===""){
+alert("Escribe nombre");
+return;
 }
 
-/* PEDIDOS */
+let fechaObj=fecha?new Date(fecha+"T12:00:00"):new Date();
+
+for(let i=0;i<cantidad;i++){
+
+await addDoc(pedidosRef,{
+cliente,
+tipo,
+precio,
+fecha:Timestamp.fromDate(fechaObj),
+estado:"pendiente"
+});
+
+}
+
+document.getElementById("cliente").value="";
+document.getElementById("cantidad").value=1;
+
+}
+
 function mostrarPedidos(){
-  let contenedor=document.getElementById("listaPedidos");
-  contenedor.innerHTML="";
-  let activos=pedidos.filter(p=>p.estado!=="pagado");
-  let porFecha={};
-  activos.forEach(p=>{
-    let fecha=p.fecha?.toDate().toLocaleDateString();
-    if(!porFecha[fecha]) porFecha[fecha]=[];
-    porFecha[fecha].push(p);
-  });
-  Object.keys(porFecha).forEach(fecha=>{
-    let card=document.createElement("div");
-    card.className="card";
-    card.innerHTML=`<div class="cardTitulo">📅 ${fecha}</div>`;
-    porFecha[fecha].forEach(p=>{
-      let li=document.createElement("li");
-      li.className=p.estado==="pendiente"?"rojo":"amarillo";
-      li.innerHTML=`
-      ${p.cliente} - ${p.tipo} ($${p.precio})
-      <div>
-        <button onclick="entregar('${p.id}')">✔</button>
-        <button onclick="pagar('${p.id}')">$</button>
-        <button class="btnBorrar" onclick="borrarPedido('${p.id}')">X</button>
-      </div>
-      `;
-      card.appendChild(li);
-    });
-    contenedor.appendChild(card);
-  });
+
+let contenedor=document.getElementById("listaPedidos");
+contenedor.innerHTML="";
+
+let filtrados=pedidos.filter(p=>p.estado===vistaActual);
+
+let porFecha={};
+
+filtrados.forEach(p=>{
+
+let fecha=p.fecha?.toDate().toLocaleDateString();
+
+if(!porFecha[fecha])porFecha[fecha]=[];
+
+porFecha[fecha].push(p);
+
+});
+
+Object.keys(porFecha)
+.sort((a,b)=>{
+
+let da=new Date(a.split("/").reverse().join("-"));
+let db=new Date(b.split("/").reverse().join("-"));
+
+return db-da;
+
+})
+.forEach(fecha=>{
+
+let card=document.createElement("div");
+card.className="card";
+card.innerHTML=`<div class="cardTitulo">📅 ${fecha}</div>`;
+
+porFecha[fecha].forEach(p=>{
+
+let li=document.createElement("li");
+
+if(p.estado==="pendiente")li.className="rojo";
+if(p.estado==="listo")li.className="amarillo";
+if(p.estado==="entregado")li.className="azul";
+if(p.estado==="pagado")li.className="verde";
+
+let botones="";
+
+if(p.estado==="pendiente")
+botones=`<button onclick="marcarListo('${p.id}')">✔</button>`;
+
+if(p.estado==="listo")
+botones=`<button onclick="entregar('${p.id}')">📦</button>`;
+
+if(p.estado==="entregado")
+botones=`<button onclick="pagar('${p.id}')">$</button>`;
+
+botones+=` <button class="btnBorrar" onclick="borrarPedido('${p.id}')">X</button>`;
+
+li.innerHTML=`
+${p.cliente} - ${p.tipo} ($${p.precio})
+<div>${botones}</div>
+`;
+
+card.appendChild(li);
+
+});
+
+contenedor.appendChild(card);
+
+});
+
+}
+
+/* FINALIZAR PEDIDOS */
+
+window.finalizarPedidos=async function(){
+
+let pagados=pedidos.filter(p=>p.estado==="pagado");
+
+for(let p of pagados){
+await updateDoc(doc(db,"pedidos",p.id),{estado:"cerrado"});
+}
+
+alert("Pedidos enviados a ventas");
+
 }
 
 /* PRODUCCION */
+
 function mostrarProduccion(){
-  let cont=document.getElementById("listaProduccion");
-  cont.innerHTML="";
-  let pendientes=pedidos.filter(p=>p.estado==="pendiente");
-  let agrupados={};
-  pendientes.forEach(p=>{
-    let key=p.tipo+"-"+p.precio;
-    if(!agrupados[key]){
-      agrupados[key]={tipo:p.tipo,precio:p.precio,ordenes:0};
-    }
-    agrupados[key].ordenes++;
-  });
-  let totalTacos=0;
-  let totalTortillas=0;
-  for(let k in agrupados){
-    let item=agrupados[k];
-    let tacosPorOrden=item.precio==50?7:5;
-    let tacos=item.ordenes*tacosPorOrden;
-    let tortillas=tacos;
-    totalTacos+=tacos;
-    totalTortillas+=tortillas;
-    let li=document.createElement("li");
-    li.className="rojo";
-    li.innerText=item.ordenes+" "+item.tipo+" | "+tacos+" tacos | "+tortillas+" tortillas";
-    cont.appendChild(li);
-  }
-  let total=document.createElement("div");
-  total.style.marginTop="10px";
-  total.style.fontWeight="bold";
-  total.innerText="TOTAL: "+totalTacos+" tacos | "+totalTortillas+" tortillas";
-  cont.appendChild(total);
+
+let contenedor=document.getElementById("listaProduccion");
+contenedor.innerHTML="";
+
+/* SOLO PEDIDOS ACTIVOS */
+let activos=pedidos.filter(p=>p.estado!=="cerrado");
+
+/* AGRUPAR POR FECHA */
+let porFecha={};
+
+activos.forEach(p=>{
+
+let fecha=p.fecha?.toDate().toLocaleDateString();
+
+if(!porFecha[fecha]) porFecha[fecha]=[];
+
+porFecha[fecha].push(p);
+
+});
+
+Object.keys(porFecha)
+.sort((a,b)=>{
+
+let da=new Date(a.split("/").reverse().join("-"));
+let db=new Date(b.split("/").reverse().join("-"));
+
+return db-da;
+
+})
+.forEach(fecha=>{
+
+let card=document.createElement("div");
+card.className="card";
+
+card.innerHTML=`<div class="cardTitulo">📅 ${fecha}</div>`;
+
+/* AGRUPAR POR TIPO */
+let porTipo={};
+
+porFecha[fecha].forEach(p=>{
+
+let key=p.tipo;
+
+if(!porTipo[key]){
+porTipo[key]={
+tipo:p.tipo,
+ordenes:0,
+tortillas:0
+};
 }
 
+/* CONTAR ORDENES */
+porTipo[key].ordenes++;
+
+/* CALCULAR TORTILLAS */
+if(p.precio==35) porTipo[key].tortillas+=5;
+if(p.precio==50) porTipo[key].tortillas+=7;
+
+});
+
+let totalTortillas=0;
+
+/* MOSTRAR TIPOS */
+Object.values(porTipo).forEach(item=>{
+
+let li=document.createElement("li");
+li.style.background="white";
+li.style.color="black";
+li.style.display="block";
+li.style.padding="10px";
+
+let emoji="🌶";
+
+if(item.tipo.includes("Tomate")) emoji="🍅";
+if(item.tipo.includes("Papa")) emoji="🥔";
+if(item.tipo.includes("Queso")) emoji="🧀";
+if(item.tipo.includes("Pollo")) emoji="🍗";
+
+li.innerHTML=`
+<div style="font-weight:bold">${emoji} ${item.tipo}</div>
+<div>${item.ordenes} órdenes | 🫓 ${item.tortillas}</div>
+`;
+
+totalTortillas+=item.tortillas;
+
+card.appendChild(li);
+
+});
+
+/* TOTAL DEL DIA */
+
+let total=document.createElement("div");
+
+total.style.fontWeight="bold";
+total.style.marginTop="10px";
+
+total.innerText="🫓 Total tortillas del día: "+totalTortillas;
+
+card.appendChild(total);
+
+contenedor.appendChild(card);
+
+});
+
+}
 /* HISTORIAL */
+
 function mostrarHistorial(){
-  let cont=document.getElementById("historialVentas");
-  cont.innerHTML="";
-  let ventas=pedidos.filter(p=>p.estado==="pagado");
-  ventas.sort((a,b)=>b.fecha.seconds-a.fecha.seconds);
-  let agrupados={};
-  ventas.forEach(p=>{
-    let fecha=p.fecha?.toDate().toLocaleDateString();
-    if(!agrupados[fecha]) agrupados[fecha]=[];
-    agrupados[fecha].push(p);
-  });
-  Object.keys(agrupados).forEach(fecha=>{
-    let pedidosDia=agrupados[fecha];
-    let card=document.createElement("div");
-    card.className="card";
-    let tipos={};
-    let total=0;
-    pedidosDia.forEach(p=>{
-      let key=p.tipo+"-"+p.precio;
-      if(!tipos[key]){
-        tipos[key]={tipo:p.tipo,precio:p.precio,cantidad:0,id:p.id};
-      }
-      tipos[key].cantidad++;
-      total+=p.precio;
-    });
-    let detalle=document.createElement("div");
-    detalle.style.display="none";
-    for(let k in tipos){
-      let t=tipos[k];
-      let li=document.createElement("li");
-      li.className="verde";
-      li.innerHTML=`
-      ${t.cantidad} ${t.tipo} = $${t.cantidad*t.precio}
-      <button class="btnBorrar" onclick="borrarPedido('${t.id}')">X</button>
-      `;
-      detalle.appendChild(li);
-    }
-    let boton=document.createElement("button");
-    boton.innerText="Abrir";
-    boton.onclick=function(){
-      if(detalle.style.display==="none"){
-        detalle.style.display="block";
-        boton.innerText="Cerrar";
-      }else{
-        detalle.style.display="none";
-        boton.innerText="Abrir";
-      }
-    }
-    card.innerHTML=`<div class="cardTitulo">Venta ${fecha}</div>
-    <div style="font-weight:bold;margin-bottom:10px;">💰 Total del día: $${total}</div>`;
-    card.appendChild(boton);
-    card.appendChild(detalle);
-    cont.appendChild(card);
-  });
+
+let cont=document.getElementById("historialVentas");
+cont.innerHTML="";
+
+let ventas=pedidos.filter(p=>p.estado==="cerrado");
+
+ventas.sort((a,b)=>b.fecha.seconds-a.fecha.seconds);
+
+let agrupados={};
+
+ventas.forEach(p=>{
+
+let fecha=p.fecha?.toDate().toLocaleDateString();
+
+if(!agrupados[fecha]) agrupados[fecha]=[];
+
+agrupados[fecha].push(p);
+
+});
+
+Object.keys(agrupados)
+.sort((a,b)=>{
+
+let da=new Date(a.split("/").reverse().join("-"));
+let db=new Date(b.split("/").reverse().join("-"));
+
+return db-da;
+
+})
+.forEach(fecha=>{
+
+let pedidosDia=agrupados[fecha];
+
+let card=document.createElement("div");
+card.className="card";
+
+let tipos={};
+let total=0;
+
+pedidosDia.forEach(p=>{
+
+let key=p.tipo+"-"+p.precio;
+
+if(!tipos[key]){
+tipos[key]={tipo:p.tipo,precio:p.precio,cantidad:0,id:p.id};
 }
 
-/* DASHBOARD Y GRAFICAS */
+tipos[key].cantidad++;
+total+=p.precio;
+
+});
+
+let detalle=document.createElement("div");
+detalle.style.display="none";
+
+for(let k in tipos){
+
+let t=tipos[k];
+
+let li=document.createElement("li");
+li.className="verde";
+
+li.innerHTML=`
+${t.cantidad} ${t.tipo} = $${t.cantidad*t.precio}
+<button class="btnBorrar" onclick="borrarPedido('${t.id}')">X</button>
+`;
+
+detalle.appendChild(li);
+
+}
+
+let boton=document.createElement("button");
+
+boton.innerText="Abrir";
+
+boton.onclick=function(){
+
+if(detalle.style.display==="none"){
+detalle.style.display="block";
+boton.innerText="Cerrar";
+}else{
+detalle.style.display="none";
+boton.innerText="Abrir";
+}
+
+}
+
+card.innerHTML=`
+<div class="cardTitulo">Venta ${fecha}</div>
+<div style="font-weight:bold;margin-bottom:10px;">
+💰 Total del día: $${total}
+</div>
+`;
+
+card.appendChild(boton);
+card.appendChild(detalle);
+
+cont.appendChild(card);
+
+});
+
+}
+/* DASHBOARD */
+
 function actualizarDashboard(){
-  let ventas=pedidos.filter(p=>p.estado==="pagado");
-  let porFecha={},porTipo={};
-  let totalVentas=0,totalOrdenes=0;
-  ventas.forEach(p=>{
-    let fechaObj=p.fecha.toDate();
-    let fecha=fechaObj.toLocaleDateString();
-    if(!porFecha[fecha]) porFecha[fecha]={total:0,ordenes:0,date:fechaObj};
-    porFecha[fecha].total+=p.precio;
-    porFecha[fecha].ordenes++;
-    if(!porTipo[p.tipo]) porTipo[p.tipo]=0;
-    porTipo[p.tipo]++;
-    totalVentas+=p.precio;
-    totalOrdenes++;
-  });
 
-  // KPIs
-  document.getElementById("kpiVentas").innerText="$"+totalVentas;
-  document.getElementById("kpiOrdenes").innerText=totalOrdenes;
-  document.getElementById("kpiPromedio").innerText="$"+(totalOrdenes?Math.round(totalVentas/totalOrdenes):0);
+let ventas=pedidos.filter(p=>p.estado==="cerrado");
 
-  // Gráficas
-  let ordenado=Object.values(porFecha).sort((a,b)=>a.date-b.date);
-  let labels=ordenado.map(f=>f.date.toLocaleDateString());
-  let ventasData=ordenado.map(f=>f.total);
-  let ordenesData=ordenado.map(f=>f.ordenes);
+let porFecha={},porTipo={};
 
-  if(graficaVentas) graficaVentas.destroy();
-  if(graficaOrdenes) graficaOrdenes.destroy();
-  if(graficaTipos) graficaTipos.destroy();
+let totalVentas=0,totalOrdenes=0;
 
-  graficaVentas=new Chart(document.getElementById("graficaVentasDia"),{
-    type:"bar",
-    data:{labels,datasets:[{label:"Ventas $",data:ventasData,backgroundColor:"#06C167"}]}
-  });
+ventas.forEach(p=>{
 
-  graficaOrdenes=new Chart(document.getElementById("graficaOrdenes"),{
-    type:"line",
-    data:{labels,datasets:[{label:"Órdenes",data:ordenesData,borderColor:"#f7b500",fill:false,tension:0.3}]}
-  });
+let fechaObj=p.fecha.toDate();
+let fecha=fechaObj.toLocaleDateString();
 
-  graficaTipos=new Chart(document.getElementById("graficaTipos"),{
-    type:"pie",
-    data:{labels:Object.keys(porTipo),datasets:[{data:Object.values(porTipo),backgroundColor:["#06C167","#ff5a5f","#f7b500","#00aaff","#aa00ff","#ff9900"]}]}
-  });
+if(!porFecha[fecha]) porFecha[fecha]={total:0,ordenes:0,date:fechaObj};
+
+porFecha[fecha].total+=p.precio;
+porFecha[fecha].ordenes++;
+
+if(!porTipo[p.tipo]) porTipo[p.tipo]=0;
+porTipo[p.tipo]++;
+
+totalVentas+=p.precio;
+totalOrdenes++;
+
+});
+
+document.getElementById("kpiVentas").innerText="$"+totalVentas;
+document.getElementById("kpiOrdenes").innerText=totalOrdenes;
+document.getElementById("kpiPromedio").innerText="$"+(totalOrdenes?Math.round(totalVentas/totalOrdenes):0);
+
+let ordenado=Object.values(porFecha).sort((a,b)=>a.date-b.date);
+
+let labels=ordenado.map(f=>f.date.toLocaleDateString());
+let ventasData=ordenado.map(f=>f.total);
+let ordenesData=ordenado.map(f=>f.ordenes);
+
+if(graficaVentas) graficaVentas.destroy();
+if(graficaOrdenes) graficaOrdenes.destroy();
+if(graficaTipos) graficaTipos.destroy();
+
+graficaVentas=new Chart(document.getElementById("graficaVentasDia"),{
+type:"bar",
+data:{labels,datasets:[{label:"Ventas $",data:ventasData,backgroundColor:"#06C167"}]}
+});
+
+graficaOrdenes=new Chart(document.getElementById("graficaOrdenes"),{
+type:"line",
+data:{labels,datasets:[{label:"Órdenes",data:ordenesData,borderColor:"#f7b500",fill:false,tension:0.3}]}
+});
+
+graficaTipos=new Chart(document.getElementById("graficaTipos"),{
+type:"pie",
+data:{labels:Object.keys(porTipo),datasets:[{data:Object.values(porTipo),backgroundColor:["#06C167","#ff5a5f","#f7b500","#00aaff","#aa00ff","#ff9900"]}]}
+});
+
 }
-
 /* ACCIONES */
+
+window.marcarListo=id=>updateDoc(doc(db,"pedidos",id),{estado:"listo"});
 window.entregar=id=>updateDoc(doc(db,"pedidos",id),{estado:"entregado"});
 window.pagar=id=>updateDoc(doc(db,"pedidos",id),{estado:"pagado"});
+
 window.borrarPedido=async id=>{
-  if(!confirm("¿Borrar pedido?"))return;
-  await deleteDoc(doc(db,"pedidos",id));
+if(!confirm("¿Borrar pedido?"))return;
+await deleteDoc(doc(db,"pedidos",id));
 }
 
-/* LISTENER */
 onSnapshot(pedidosRef,(snapshot)=>{
-  pedidos=[];
-  snapshot.forEach(d=>pedidos.push({id:d.id,...d.data()}));
-  mostrarPedidos();
-  mostrarProduccion();
-  mostrarHistorial();
-  actualizarDashboard();
-});
-</script>
 
+pedidos=[];
+
+snapshot.forEach(d=>pedidos.push({id:d.id,...d.data()}));
+
+mostrarPedidos();
+mostrarHistorial();
+actualizarDashboard();
+
+if(!document.getElementById("produccion").classList.contains("hidden")){
+mostrarProduccion();
+}
+
+});
+cambiarVista("pendiente");
+</script>
+<div id="updateBox" style="
+position:fixed;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+background:#06C167;
+color:white;
+padding:12px 18px;
+border-radius:12px;
+box-shadow:0 6px 20px rgba(0,0,0,0.3);
+display:none;
+z-index:2000;
+font-weight:bold;
+">
+
+Nueva versión disponible 🚀
+<button onclick="actualizarApp()" style="
+margin-left:10px;
+background:white;
+color:#06C167;
+font-weight:bold;
+border:none;
+border-radius:8px;
+padding:6px 10px;
+cursor:pointer;
+">
+Actualizar
+</button>
+
+</div>
 </body>
-</html>
+  </html>
