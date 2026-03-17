@@ -10,38 +10,57 @@
 <meta name="theme-color" content="#06C167">
 
 <script>
+
+let newWorker;
+
+if ('serviceWorker' in navigator) {
+
 window.addEventListener('load', () => {
 
-  if ('serviceWorker' in navigator) {
+navigator.serviceWorker.register('sw.js')
+.then(reg => {
 
-    navigator.serviceWorker.register('sw.js')
-    .then(reg => {
+console.log('Service Worker registrado', reg);
 
-      console.log('Service Worker registrado', reg);
+/* detectar actualización */
 
-      reg.addEventListener('updatefound', () => {
+reg.addEventListener('updatefound', () => {
 
-        newWorker = reg.installing;
+newWorker = reg.installing;
 
-        newWorker.addEventListener('statechange', () => {
+newWorker.addEventListener('statechange', () => {
 
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
 
-            let box = document.getElementById("updateBox");
-            if(box) box.style.display="block";
+document.getElementById("updateBox").style.display="block";
 
-          }
-
-        });
-
-      });
-
-    })
-    .catch(err => console.log('Error SW', err));
-
-  }
+}
 
 });
+
+});
+
+})
+.catch(err => console.log('Error SW', err));
+
+});
+
+}
+
+/* botón actualizar */
+
+function actualizarApp(){
+
+if(newWorker){
+
+newWorker.postMessage({action:'skipWaiting'});
+
+}
+
+window.location.reload();
+
+}
+
 </script>
 
 <style>
@@ -226,7 +245,91 @@ font-weight:bold;
 background:#06C167;
 color:white;
 }
+/* FORMULARIO PEDIDO */
 
+.pedidoForm{
+max-width:420px;
+margin:auto;
+text-align:center;
+}
+
+.tituloForm{
+font-size:22px;
+font-weight:bold;
+margin-bottom:15px;
+color:#333;
+}
+
+.pedidoForm input,
+.pedidoForm select{
+width:100%;
+margin:8px 0;
+box-sizing:border-box;
+}
+
+.btnGrande{
+width:100%;
+padding:16px;
+font-size:18px;
+font-weight:bold;
+background:#06C167;
+color:white;
+border-radius:12px;
+margin-top:10px;
+transition:0.15s;
+}
+
+.btnGrande:active{
+transform:scale(0.96);
+}
+
+/* MEJORA INPUTS */
+
+input:focus,select:focus{
+outline:none;
+border:2px solid #06C167;
+}
+
+/* MEJORA MOBILE */
+
+@media(max-width:500px){
+
+.container{
+padding:15px;
+}
+
+.card{
+padding:18px;
+}
+
+}
+  .selectorTacos{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin:10px 0;
+}
+
+.btnTipo{
+padding:14px;
+border-radius:10px;
+border:2px solid #ddd;
+background:white;
+font-weight:bold;
+font-size:15px;
+cursor:pointer;
+transition:0.15s;
+}
+
+.btnTipo:hover{
+border-color:#06C167;
+}
+
+.btnTipo.activo{
+background:#06C167;
+color:white;
+border-color:#06C167;
+}
 </style>
 </head>
 
@@ -249,39 +352,51 @@ color:white;
 <div class="container">
 
 <div id="nuevo">
-<h2>Agregar pedido</h2>
+
+<div class="card pedidoForm">
+
+<div class="tituloForm">
+🌮 Nuevo pedido
+</div>
 
 <input id="cliente" placeholder="Nombre del cliente">
-<input id="fechaPedido" type="date"><br>
 
-<select id="tipo">
-<option>Morita Mixta</option>
-<option>Morita Pollo</option>
-<option>Morita Papa</option>
-<option>Morita Queso</option>
-<option>Tomate Mixta</option>
-<option>Tomate Pollo</option>
-<option>Tomate Papa</option>
-<option>Tomate Queso</option>
-</select>
+<input id="fechaPedido" type="date">
+
+<div class="selectorTacos">
+
+<button class="btnTipo" onclick="seleccionarTipo(this,'Morita Mixta')">🌶 Morita Mixta</button>
+<button class="btnTipo" onclick="seleccionarTipo(this,'Morita Pollo')">🍗 Morita Pollo</button>
+<button class="btnTipo" onclick="seleccionarTipo(this,'Morita Papa')">🥔 Morita Papa</button>
+<button class="btnTipo" onclick="seleccionarTipo(this,'Morita Queso')">🧀 Morita Queso</button>
+
+<button class="btnTipo" onclick="seleccionarTipo(this,'Tomate Mixta')">🍅 Tomate Mixta</button>
+<button class="btnTipo" onclick="seleccionarTipo(this,'Tomate Pollo')">🍗 Tomate Pollo</button>
+<button class="btnTipo" onclick="seleccionarTipo(this,'Tomate Papa')">🥔 Tomate Papa</button>
+<button class="btnTipo" onclick="seleccionarTipo(this,'Tomate Queso')">🧀 Tomate Queso</button>
+
+</div>
+
+<input type="hidden" id="tipo">
 
 <select id="precio">
 <option value="35">$35</option>
 <option value="50">$50</option>
 </select>
 
-<input id="cantidad" type="number" value="1" min="1" max="10" style="width:60px"><br>
+<input id="cantidad" type="number" value="1" min="1" max="10" placeholder="Cantidad de órdenes">
 
-<button class="agregar" onclick="agregarPedido()">Agregar Pedido</button>
+<button class="btnGrande" onclick="agregarPedido()">
+➕ Agregar Pedido
+</button>
+
+</div>
+
 </div>
 
 <div id="pedidos" class="hidden">
 
 <h2>Pedidos</h2>
-
-<button class="agregar" onclick="finalizarPedidos()" style="margin-bottom:10px;">
-Finalizar pedidos
-</button>
 
 <div class="tabsPedidos">
 
@@ -385,7 +500,17 @@ if(vista==="pagado")document.getElementById("tabPagado").classList.add("activo")
 mostrarPedidos();
 
 }
+window.seleccionarTipo=function(btn,tipo){
 
+document.querySelectorAll(".btnTipo").forEach(b=>{
+b.classList.remove("activo");
+});
+
+btn.classList.add("activo");
+
+document.getElementById("tipo").value=tipo;
+
+}
 window.agregarPedido=async function(){
 
 let cliente=document.getElementById("cliente").value;
@@ -396,6 +521,11 @@ let cantidad=parseInt(document.getElementById("cantidad").value)||1;
 
 if(cliente===""){
 alert("Escribe nombre");
+return;
+}
+
+if(tipo===""){
+alert("Selecciona tipo de taco");
 return;
 }
 
@@ -415,9 +545,13 @@ estado:"pendiente"
 
 document.getElementById("cliente").value="";
 document.getElementById("cantidad").value=1;
+document.querySelectorAll(".btnTipo").forEach(b=>{
+b.classList.remove("activo");
+});
 
+document.getElementById("tipo").value="";
+ 
 }
-
 function mostrarPedidos(){
 
 let contenedor=document.getElementById("listaPedidos");
@@ -429,7 +563,7 @@ let porFecha={};
 
 filtrados.forEach(p=>{
 
-let fecha=p.fecha?.toDate().toLocaleDateString();
+let fecha=p.fecha?.toDate().toISOString().split("T")[0];
 
 if(!porFecha[fecha])porFecha[fecha]=[];
 
@@ -450,9 +584,48 @@ return db-da;
 
 let card=document.createElement("div");
 card.className="card";
-card.innerHTML=`<div class="cardTitulo">📅 ${fecha}</div>`;
+let pedidosDia = porFecha[fecha];
 
-porFecha[fecha].forEach(p=>{
+let detalle=document.createElement("div");
+detalle.style.display="none";
+
+let boton=document.createElement("button");
+boton.innerText="Ver";
+
+boton.onclick=function(){
+
+if(detalle.style.display==="none"){
+detalle.style.display="block";
+boton.innerText="Ocultar";
+}else{
+detalle.style.display="none";
+boton.innerText="Ver";
+}
+
+}
+
+let botonFinalizar="";
+
+if(vistaActual==="pagado"){
+botonFinalizar=`
+<button onclick="finalizarPedidosFecha('${fecha}')" style="
+background:#06C167;
+color:white;
+margin-bottom:10px;
+">
+Finalizar pedidos
+</button>
+`;
+}
+
+card.innerHTML=`
+<div class="cardTitulo">📅 ${fecha}</div>
+<div style="font-weight:bold;margin-bottom:10px;">
+Órdenes totales: ${pedidosDia.length}
+</div>
+${botonFinalizar}
+`;
+pedidosDia.forEach(p=>{
 
 let li=document.createElement("li");
 
@@ -479,27 +652,34 @@ ${p.cliente} - ${p.tipo} ($${p.precio})
 <div>${botones}</div>
 `;
 
-card.appendChild(li);
+detalle.appendChild(li);
 
 });
 
+card.appendChild(boton);
+card.appendChild(detalle);
 contenedor.appendChild(card);
-
 });
 
 }
 
 /* FINALIZAR PEDIDOS */
 
-window.finalizarPedidos=async function(){
+  window.finalizarPedidosFecha=async function(fecha){
 
-let pagados=pedidos.filter(p=>p.estado==="pagado");
+let pedidosDia=pedidos.filter(p=>{
 
-for(let p of pagados){
+let f=p.fecha?.toDate().toISOString().split("T")[0];
+
+return f===fecha && p.estado==="pagado";
+
+});
+
+for(let p of pedidosDia){
 await updateDoc(doc(db,"pedidos",p.id),{estado:"cerrado"});
 }
 
-alert("Pedidos enviados a ventas");
+alert("Pedidos del día enviados a ventas");
 
 }
 
@@ -801,6 +981,9 @@ mostrarProduccion();
 
 });
 cambiarVista("pendiente");
+  
+document.getElementById("fechaPedido").value =
+new Date().toISOString().split("T")[0];
 </script>
 <div id="updateBox" style="
 position:fixed;
@@ -833,4 +1016,4 @@ Actualizar
 
 </div>
 </body>
-  </html>
+</html>
