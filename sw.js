@@ -1,4 +1,4 @@
-const CACHE_NAME = "taqueria-cache-v8";
+const CACHE_NAME = "taqueria-cache-v9";
 
 const urlsToCache = [
 "/",
