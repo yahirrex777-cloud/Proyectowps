@@ -381,15 +381,37 @@ border-color:#06C167;
 
 <div class="selectorTacos">
 
-<button class="btnTipo" onclick="seleccionarTipo(this,'Morita Mixta')">🌶 Morita Mixta</button>
-<button class="btnTipo" onclick="seleccionarTipo(this,'Morita Pollo')">🍗 Morita Pollo</button>
-<button class="btnTipo" onclick="seleccionarTipo(this,'Morita Papa')">🥔 Morita Papa</button>
-<button class="btnTipo" onclick="seleccionarTipo(this,'Morita Queso')">🧀 Morita Queso</button>
+<button class="btnTipo" onclick="sumarPedido('Morita Mixta', this)">🌶 Morita Mixta</button>
+<button class="btnTipo" onclick="sumarPedido('Morita Pollo', this)">🍗 Morita Pollo</button>
+<button class="btnTipo" onclick="sumarPedido('Morita Papa', this)">🥔 Morita Papa</button>
+<button class="btnTipo" onclick="sumarPedido('Morita Queso', this)">🧀 Morita Queso</button>
 
-<button class="btnTipo" onclick="seleccionarTipo(this,'Tomate Mixta')">🍅 Tomate Mixta</button>
-<button class="btnTipo" onclick="seleccionarTipo(this,'Tomate Pollo')">🍗 Tomate Pollo</button>
-<button class="btnTipo" onclick="seleccionarTipo(this,'Tomate Papa')">🥔 Tomate Papa</button>
-<button class="btnTipo" onclick="seleccionarTipo(this,'Tomate Queso')">🧀 Tomate Queso</button>
+<button class="btnTipo" onclick="sumarPedido('Tomate Mixta', this)">🍅 Tomate Mixta</button>
+<button class="btnTipo" onclick="sumarPedido('Tomate Pollo', this)">🍗 Tomate Pollo</button>
+<button class="btnTipo" onclick="sumarPedido('Tomate Papa', this)">🥔 Tomate Papa</button>
+<button class="btnTipo" onclick="sumarPedido('Tomate Queso', this)">🧀 Tomate Queso</button>
+
+</div>
+  
+  <div id="resumenPedido" style="
+margin-top:10px;
+background:white;
+border-radius:12px;
+padding:12px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+">
+
+<div style="font-weight:bold;font-size:16px;margin-bottom:8px;">
+🛒 Pedido actual
+</div>
+
+<div id="listaPedido"></div>
+
+<div id="totalPedido" style="
+margin-top:10px;
+font-weight:bold;
+color:#06C167;
+"></div>
 
 </div>
 
@@ -399,8 +421,6 @@ border-color:#06C167;
 <option value="35">$35</option>
 <option value="50">$50</option>
 </select>
-
-<input id="cantidad" type="number" value="1" min="1" max="10" placeholder="Cantidad de órdenes">
 
 <button class="btnGrande" onclick="agregarPedido()">
 ➕ Agregar Pedido
@@ -470,6 +490,7 @@ const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const pedidosRef=collection(db,"pedidos");
 
+let pedidoTemp = {};
 let pedidos=[];
 let vistaActual="pendiente";
 let abiertos = new Set();
@@ -554,52 +575,144 @@ btn.classList.add("activo");
 document.getElementById("tipo").value=tipo;
 
 }
+window.sumarPedido = function(tipo, btn){
+
+if(!pedidoTemp[tipo]){
+pedidoTemp[tipo] = 0;
+}
+
+pedidoTemp[tipo]++;
+
+/* feedback visual */
+btn.classList.add("activo");
+
+/* 👇 ESTA ES LA CLAVE */
+mostrarResumen();
+
+}
+  function mostrarResumen(){
+
+let lista = "";
+let total = 0;
+
+for(let tipo in pedidoTemp){
+
+let cantidad = pedidoTemp[tipo];
+let precioUnitario = tipo.includes("Queso") ? 40 : 35;
+
+let subtotal = cantidad * precioUnitario;
+total += subtotal;
+
+lista += `
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:8px;
+">
+
+<div>
+${tipo}
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;">
+
+<button onclick="restarPedido('${tipo}')" style="
+background:#ff4d4d;
+color:white;
+border:none;
+border-radius:6px;
+padding:4px 8px;
+">-</button>
+
+<span>x${cantidad}</span>
+
+<button onclick="sumarPedido('${tipo}', this)" style="
+background:#06C167;
+color:white;
+border:none;
+border-radius:6px;
+padding:4px 8px;
+">+</button>
+
+<span>$${subtotal}</span>
+
+</div>
+
+</div>
+`;
+
+}
+
+/* 👇 ESTO VA FUERA DEL FOR */
+document.getElementById("listaPedido").innerHTML = lista;
+document.getElementById("totalPedido").innerText = "Total: $" + total;
+
+}
+window.restarPedido = function(tipo){
+
+if(pedidoTemp[tipo]){
+pedidoTemp[tipo]--;
+
+if(pedidoTemp[tipo] <= 0){
+delete pedidoTemp[tipo];
+}
+
+mostrarResumen();
+}
+
+}
+ 
 window.agregarPedido=async function(){
 
 let cliente=document.getElementById("cliente").value;
 let fecha=document.getElementById("fechaPedido").value;
-let tipo=document.getElementById("tipo").value;
 let precio=parseInt(document.getElementById("precio").value);
-let cantidad=parseInt(document.getElementById("cantidad").value)||1;
 
 if(cliente===""){
 alert("Escribe nombre");
 return;
 }
 
-if(tipo===""){
-alert("Selecciona tipo de taco");
+if(Object.keys(pedidoTemp).length===0){
+alert("Selecciona tacos");
 return;
 }
 
 let fechaObj=fecha?new Date(fecha+"T12:00:00"):new Date();
 
-let tacos = 0;
+let tacos = (precio==35)?5:7;
 
-if(precio == 35) tacos = 5;
-if(precio == 50) tacos = 7;
-  
+/* 🔥 GUARDAR TODO */
+for(let tipo in pedidoTemp){
+
+let cantidad = pedidoTemp[tipo];
+
 for(let i=0;i<cantidad;i++){
 
 await addDoc(pedidosRef,{
 cliente,
 tipo,
 precio,
-tacos, // 👈 NUEVO
+tacos,
 fecha:Timestamp.fromDate(fechaObj),
 estado:"pendiente"
 });
+
 }
-    
 
+}
+
+/* 🧹 LIMPIAR TODO */
+pedidoTemp = {};
+
+document.getElementById("listaPedido").innerHTML="";
+document.getElementById("totalPedido").innerText="";
 document.getElementById("cliente").value="";
-document.getElementById("cantidad").value=1;
-document.querySelectorAll(".btnTipo").forEach(b=>{
-b.classList.remove("activo");
-});
+document.querySelectorAll(".btnTipo").forEach(b=>b.classList.remove("activo"));
 
-document.getElementById("tipo").value="";
- 
+alert("Pedido guardado 🚀");
+
 }
 function mostrarPedidos(){
 
