@@ -577,28 +577,36 @@ document.getElementById("tipo").value=tipo;
 }
 window.sumarPedido = function(tipo, btn){
 
-if(!pedidoTemp[tipo]){
-pedidoTemp[tipo] = 0;
+let precio = parseInt(document.getElementById("precio").value);
+let key = tipo + "_" + precio;
+
+if(!pedidoTemp[key]){
+pedidoTemp[key] = {
+tipo: tipo,
+precio: precio,
+cantidad: 0
+};
 }
 
-pedidoTemp[tipo]++;
+pedidoTemp[key].cantidad++;
 
-/* feedback visual */
 btn.classList.add("activo");
 
-/* 👇 ESTA ES LA CLAVE */
 mostrarResumen();
 
 }
-  function mostrarResumen(){
+function mostrarResumen(){
 
 let lista = "";
 let total = 0;
 
-for(let tipo in pedidoTemp){
+for(let key in pedidoTemp){
 
-let cantidad = pedidoTemp[tipo];
-let precioUnitario = tipo.includes("Queso") ? 40 : 35;
+let item = pedidoTemp[key];
+
+let tipo = item.tipo;
+let cantidad = item.cantidad;
+let precioUnitario = item.precio;
 
 let subtotal = cantidad * precioUnitario;
 total += subtotal;
@@ -617,7 +625,7 @@ ${tipo}
 
 <div style="display:flex;align-items:center;gap:8px;">
 
-<button onclick="restarPedido('${tipo}')" style="
+<button onclick="restarPedido('${key}')" style="
 background:#ff4d4d;
 color:white;
 border:none;
@@ -627,7 +635,7 @@ padding:4px 8px;
 
 <span>x${cantidad}</span>
 
-<button onclick="sumarPedido('${tipo}', this)" style="
+<button onclick="sumarDesdeCarrito('${key}')" style="
 background:#06C167;
 color:white;
 border:none;
@@ -644,25 +652,33 @@ padding:4px 8px;
 
 }
 
-/* 👇 ESTO VA FUERA DEL FOR */
+/* 👇 ESTO SÍ VA DENTRO */
 document.getElementById("listaPedido").innerHTML = lista;
 document.getElementById("totalPedido").innerText = "Total: $" + total;
 
 }
-window.restarPedido = function(tipo){
+  
+window.restarPedido = function(key){
 
-if(pedidoTemp[tipo]){
-pedidoTemp[tipo]--;
+if(pedidoTemp[key]){
+pedidoTemp[key].cantidad--;
 
-if(pedidoTemp[tipo] <= 0){
-delete pedidoTemp[tipo];
+if(pedidoTemp[key].cantidad <= 0){
+delete pedidoTemp[key];
 }
 
 mostrarResumen();
 }
 
 }
- 
+window.sumarDesdeCarrito = function(key){
+
+if(pedidoTemp[key]){
+pedidoTemp[key].cantidad++;
+mostrarResumen();
+}
+
+}
 window.agregarPedido=async function(){
 
 let cliente=document.getElementById("cliente").value;
@@ -684,18 +700,18 @@ let fechaObj=fecha?new Date(fecha+"T12:00:00"):new Date();
 let tacos = (precio==35)?5:7;
 
 /* 🔥 GUARDAR TODO */
-for(let tipo in pedidoTemp){
+for(let key in pedidoTemp){
 
-let cantidad = pedidoTemp[tipo];
+let item = pedidoTemp[key];
 
-for(let i=0;i<cantidad;i++){
+for(let i=0;i<item.cantidad;i++){
 
 await addDoc(pedidosRef,{
 cliente,
-tipo,
-precio,
-tacos,
-fecha:Timestamp.fromDate(fechaObj),
+tipo: item.tipo,
+precio: item.precio,
+tacos: item.precio == 35 ? 5 : 7,
+fecha: Timestamp.fromDate(fechaObj),
 estado:"pendiente"
 });
 
