@@ -1,14 +1,24 @@
 <!DOCTYPE html>
 <html lang="es">
 
+<!-- ========================= -->
+<!-- Configuracion Global/HEAD -->
+<!-- ========================= -->
 <head>
+<!-- Metadatos -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Sistema de Taquería</title>
+
+<!-- Librerias Externas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#06C167">
 
+<!-- Service Worker -->
 <script>
 
 let newWorker;
@@ -63,8 +73,13 @@ window.location.reload();
 
 </script>
 
+
+<!-- ========================= -->
+<!-- Estilos (CSS) -->
+<!-- ========================= -->
 <style>
 
+/* ===== Estilos Generales ===== */
 body{
 font-family:Arial;
 background:#f5f5f5;
@@ -82,6 +97,7 @@ align-items:center;
 justify-content:space-between;
 }
 
+/* ===== Componentes ===== */
 .menuBtn{
 font-size:22px;
 cursor:pointer;
@@ -146,6 +162,7 @@ border:1px solid #ccc;
 font-size:16px;
 }
 
+/* ===== Botones ===== */
 button{
 padding:8px 12px;
 border:none;
@@ -187,6 +204,7 @@ align-items:center;
 color:white;
 }
 
+/* ===== Estados Pedidos ===== */
 .rojo{
 background:#ffe5e5;
 color:#b30000;
@@ -306,7 +324,7 @@ outline:none;
 border:2px solid #06C167;
 }
 
-/* MEJORA MOBILE */
+/* Responsive */
 
 @media(max-width:500px){
 
@@ -347,15 +365,21 @@ color:white;
 border-color:#06C167;
 }
 </style>
+
 </head>
 
+<!-- ========================= -->
+<!-- Estructura Visual (BODY) -->
+<!-- ========================= -->
 <body>
 
+<!-- HEADER -->
 <header>
 🌮 Sistema de Taquería
 <button class="menuBtn" onclick="toggleMenu()">☰</button>
 </header>
 
+<!-- Menu Lateral -->
 <div id="sidebar" class="sidebar">
 <button class="closeBtn" onclick="toggleMenu()">✖</button>
 <button onclick="mostrarMenu('nuevo')">Nuevo pedido</button>
@@ -365,8 +389,10 @@ border-color:#06C167;
 <button onclick="mostrarMenu('dashboard')">Dashboard</button>
 </div>
 
+<!-- Contenedor Principal -->
 <div class="container">
 
+<!-- Seccion Nuevo Pedido -->
 <div id="nuevo">
 
 <div class="card pedidoForm">
@@ -379,6 +405,7 @@ border-color:#06C167;
 
 <input id="fechaPedido" type="date">
 
+<!-- Selector de Tacos -->
 <div class="selectorTacos">
 
 <button class="btnTipo" onclick="sumarPedido('Morita Mixta', this)">🌶 Morita Mixta</button>
@@ -392,7 +419,8 @@ border-color:#06C167;
 <button class="btnTipo" onclick="sumarPedido('Tomate Queso', this)">🧀 Tomate Queso</button>
 
 </div>
-  
+
+<!-- Carrito / Resumen --> 
   <div id="resumenPedido" style="
 margin-top:10px;
 background:white;
@@ -430,6 +458,9 @@ color:#06C167;
 
 </div>
 
+<!-- ========================= -->
+<!-- Seccion Pedidos -->
+<!-- ========================= -->
 <div id="pedidos" class="hidden">
 
 <h2>Pedidos</h2>
@@ -447,16 +478,25 @@ color:#06C167;
 
 </div>
 
+<!-- ========================= -->
+<!-- Seccion Produccion -->
+<!-- ========================= -->
 <div id="produccion" class="hidden">
 <h2>Producción</h2>
 <div id="listaProduccion"></div>
 </div>
 
+<!-- ========================= -->
+<!-- Seccion Ventas -->
+<!-- ========================= -->
 <div id="ventas" class="hidden">
 <h2>Ventas</h2>
 <div id="historialVentas"></div>
 </div>
 
+<!-- ========================= -->
+<!-- Seccion DASHBOARD-->
+<!-- ========================= -->
 <div id="dashboard" class="hidden">
 
 <h2>📊 Dashboard</h2>
@@ -475,6 +515,9 @@ color:#06C167;
 
 </div>
 
+<!-- ========================= -->
+<!-- Logica del Sistema (JS) -->
+<!-- ========================= -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
